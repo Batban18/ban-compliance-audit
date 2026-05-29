@@ -1,0 +1,132 @@
+{% extends "base.html" %}
+{% block title %}Dashboard — Compliance Auditor{% endblock %}
+{% block page_title %}Dashboard{% endblock %}
+{% block topbar_right %}Overview across all frameworks{% endblock %}
+
+{% block content %}
+
+<!-- Stats row -->
+<div class="stats-grid">
+  <div class="stat-card danger">
+    <div class="label">Overdue Items</div>
+    <div class="value">{{ stats.overdue }}</div>
+    <div class="sub">Deadlines past due</div>
+  </div>
+  <div class="stat-card danger">
+    <div class="label">Critical Gaps</div>
+    <div class="value">{{ stats.critical_gaps }}</div>
+    <div class="sub">Require immediate action</div>
+  </div>
+  <div class="stat-card warning">
+    <div class="label">High-Risk Vendors</div>
+    <div class="value">{{ stats.high_risk_vendors }}</div>
+    <div class="sub">High or critical risk</div>
+  </div>
+  <div class="stat-card info">
+    <div class="label">Evidence Items</div>
+    <div class="value">{{ stats.total_evidence }}</div>
+    <div class="sub">Uploaded artifacts</div>
+  </div>
+</div>
+
+{% if stats.critical_gaps > 0 %}
+<div class="alert alert-danger mb-16">
+  ⚠ {{ stats.critical_gaps }} critical gap{{ 's' if stats.critical_gaps != 1 }} require immediate remediation.
+  <a href="/gaps" style="color:inherit;text-decoration:underline;margin-left:8px;">View gaps →</a>
+</div>
+{% endif %}
+
+{% if stats.overdue > 0 %}
+<div class="alert alert-warning mb-16">
+  ⏰ {{ stats.overdue }} deadline{{ 's are' if stats.overdue != 1 else ' is' }} overdue.
+  <a href="/schedule" style="color:inherit;text-decoration:underline;margin-left:8px;">View schedule →</a>
+</div>
+{% endif %}
+
+<!-- Framework cards -->
+<h3 style="font-size:13px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:14px;">Frameworks</h3>
+<div class="fw-grid mb-20">
+  {% for fw in frameworks %}
+  {% set pct = fw.readiness_pct %}
+  <div class="fw-card">
+    <div class="fw-card-header">
+      <div>
+        <h3>{{ fw.name }}</h3>
+        <span style="font-size:11px;color:var(--text-muted);">{{ fw.total_controls }} controls</span>
+      </div>
+      <div class="flex gap-8" style="align-items:center;">
+        <div class="grade {{ fw.grade }}">{{ fw.grade }}</div>
+        <button id="audit-btn-{{ fw.id }}" class="btn btn-secondary btn-sm"
+                onclick="runAudit('{{ fw.id }}')">Run Audit</button>
+      </div>
+    </div>
+
+    <div style="font-size:12px;color:var(--text-muted);margin-bottom:4px;">
+      Readiness — {{ pct }}%
+    </div>
+    <div class="progress-bar">
+      <div class="progress-fill" data-pct="{{ pct }}"></div>
+    </div>
+
+    <div class="fw-meta">
+      <span>✓ {{ fw.compliant_controls }} compliant</span>
+      <span>Score: {{ fw.audit_score }}</span>
+      <span>v{{ fw.version }}</span>
+    </div>
+
+    <div style="margin-top:14px;display:flex;gap:8px;">
+      <a href="/controls?framework={{ fw.id }}" class="btn btn-secondary btn-sm">Controls</a>
+      <a href="/gaps?framework={{ fw.id }}" class="btn btn-secondary btn-sm">Gaps</a>
+      <a href="/reports" class="btn btn-secondary btn-sm">Reports</a>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+
+<!-- Recent Audits -->
+<div class="card">
+  <div class="card-header">
+    <h3>Recent Audit Results</h3>
+    <a href="/controls" class="btn btn-secondary btn-sm">View All Controls</a>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Control</th>
+          <th>Framework</th>
+          <th>Status</th>
+          <th>Score</th>
+          <th>Findings</th>
+          <th>Audited</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for a in recent_audits %}
+        <tr>
+          <td class="font-mono text-sm">{{ a.control_id }}</td>
+          <td><span class="badge badge-muted">{{ a.framework_id }}</span></td>
+          <td>
+            {% if a.status == 'pass' %}
+              <span class="badge badge-success">Pass</span>
+            {% elif a.status == 'partial' %}
+              <span class="badge badge-warning">Partial</span>
+            {% else %}
+              <span class="badge badge-danger">Fail</span>
+            {% endif %}
+          </td>
+          <td>
+            <span style="color:{% if a.score >= 75 %}var(--success){% elif a.score >= 50 %}var(--warning){% else %}var(--danger){% endif %};">
+              {{ a.score }}
+            </span>
+          </td>
+          <td class="truncate text-muted" style="max-width:260px;">{{ a.findings or '—' }}</td>
+          <td class="text-muted text-sm">{{ a.audited_at[:16] if a.audited_at else '—' }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{% endblock %}

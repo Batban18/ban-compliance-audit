@@ -1,0 +1,140 @@
+{% extends "base.html" %}
+{% block title %}Schedule — Compliance Auditor{% endblock %}
+{% block page_title %}Compliance Schedule{% endblock %}
+{% block topbar_right %}{{ deadlines|length }} deadlines tracked{% endblock %}
+
+{% block content %}
+
+{% set overdue_count = deadlines | selectattr('is_overdue') | list | length %}
+{% set pending_count = deadlines | selectattr('status', 'equalto', 'pending') | list | length %}
+{% set done_count = deadlines | selectattr('status', 'equalto', 'completed') | list | length %}
+
+<div class="stats-grid mb-20">
+  <div class="stat-card danger">
+    <div class="label">Overdue</div>
+    <div class="value">{{ overdue_count }}</div>
+    <div class="sub">Past due date</div>
+  </div>
+  <div class="stat-card warning">
+    <div class="label">Pending</div>
+    <div class="value">{{ pending_count }}</div>
+    <div class="sub">Not yet complete</div>
+  </div>
+  <div class="stat-card success">
+    <div class="label">Completed</div>
+    <div class="value">{{ done_count }}</div>
+    <div class="sub">Done</div>
+  </div>
+</div>
+
+{% if overdue_count > 0 %}
+<div class="alert alert-danger mb-16">
+  ⏰ {{ overdue_count }} deadline{{ 's are' if overdue_count != 1 else ' is' }} overdue. Review and update immediately.
+</div>
+{% endif %}
+
+<div class="flex-between mb-16">
+  <input type="text" id="table-search" placeholder="Filter deadlines…" style="width:260px;">
+  <button class="btn btn-primary" onclick="openModal('modal-add-deadline')">+ Add Deadline</button>
+</div>
+
+<div class="card">
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Title</th>
+          <th>Framework</th>
+          <th>Due Date</th>
+          <th>Days</th>
+          <th>Owner</th>
+          <th>Status</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for d in deadlines %}
+        <tr class="filterable-row">
+          <td style="font-weight:500;">{{ d.title }}</td>
+          <td><span class="badge badge-muted">{{ d.framework_id or '—' }}</span></td>
+          <td>
+            <span class="{% if d.is_overdue %}overdue{% else %}text-muted{% endif %} text-sm">
+              {{ d.due_date[:10] if d.due_date else '—' }}
+            </span>
+          </td>
+          <td>
+            {% if d.status == 'completed' %}
+              <span class="badge badge-success">Done</span>
+            {% elif d.is_overdue %}
+              <span class="overdue text-sm font-mono">{{ (d.days_remaining or 0) | abs }}d overdue</span>
+            {% elif d.days_remaining is not none %}
+              <span class="text-muted text-sm font-mono">{{ d.days_remaining }}d left</span>
+            {% else %}
+              <span class="text-muted">—</span>
+            {% endif %}
+          </td>
+          <td class="text-muted text-sm">{{ d.owner or '—' }}</td>
+          <td>
+            {% if d.status == 'completed' %}
+              <span class="badge badge-success">Completed</span>
+            {% elif d.is_overdue %}
+              <span class="badge badge-danger">Overdue</span>
+            {% else %}
+              <span class="badge badge-warning">Pending</span>
+            {% endif %}
+          </td>
+          <td>
+            {% if d.status == 'pending' %}
+            <form method="post" action="/schedule/{{ d.id }}/complete" style="display:inline;">
+              <button type="submit" class="btn btn-success btn-sm">Complete</button>
+            </form>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Add Deadline Modal -->
+<div class="modal-overlay" id="modal-add-deadline">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>Add Compliance Deadline</h3>
+      <button class="modal-close" onclick="closeModal('modal-add-deadline')">✕</button>
+    </div>
+    <form method="post" action="/schedule/add">
+      <div class="modal-body">
+        <div class="form-group">
+          <label>Title *</label>
+          <input type="text" name="title" placeholder="e.g. Annual SOC 2 audit preparation" required>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Framework *</label>
+            <select name="framework_id" required>
+              {% for fw in frameworks %}
+              <option value="{{ fw.id }}">{{ fw.name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Due Date *</label>
+            <input type="date" name="due_date" required>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Owner</label>
+          <input type="text" name="owner" placeholder="Team or person responsible">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="closeModal('modal-add-deadline')">Cancel</button>
+        <button type="submit" class="btn btn-primary">Add Deadline</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+{% endblock %}

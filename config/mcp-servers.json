@@ -1,0 +1,56 @@
+{
+  "mcpServers": {
+    "framework-server": {
+      "command": "python",
+      "args": ["servers/framework_server.py"],
+      "env": { "FRAMEWORK_DB": "sqlite:///compliance.db" },
+      "trust": false
+    },
+    "evidence-server": {
+      "httpUrl": "http://localhost:5001/mcp",
+      "timeout": 30000,
+      "trust": false
+    },
+    "audit-server": {
+      "httpUrl": "http://localhost:5002/mcp",
+      "timeout": 30000,
+      "trust": false
+    },
+    "policy-server": {
+      "command": "python",
+      "args": ["servers/policy_server.py"],
+      "env": { "POLICY_STORE": "sqlite:///compliance.db" },
+      "trust": false
+    },
+    "vendor-server": {
+      "httpUrl": "http://localhost:5003/mcp",
+      "timeout": 30000,
+      "trust": false
+    },
+    "report-server": {
+      "command": "python",
+      "args": ["servers/report_server.py"],
+      "env": {
+        "REPORT_OUTPUT_DIR": "./reports",
+        "SMTP_HOST": "smtp.gmail.com",
+        "SMTP_PORT": "587"
+      },
+      "trust": false
+    },
+    "gap-analysis-server": {
+      "httpUrl": "http://localhost:5004/mcp",
+      "timeout": 30000,
+      "trust": false
+    },
+    "schedule-server": {
+      "command": "python",
+      "args": ["servers/schedule_server.py"],
+      "env": {
+        "SMTP_HOST": "smtp.gmail.com",
+        "SMTP_PORT": "587",
+        "ALERT_EMAIL": "compliance@company.com"
+      },
+      "trust": false
+    }
+  }
+}

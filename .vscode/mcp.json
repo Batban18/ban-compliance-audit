@@ -1,0 +1,24 @@
+{
+  "mcpServers": {
+    "framework-server": {
+      "command": "python",
+      "args": ["servers/framework_server.py"],
+      "trust": false
+    },
+    "policy-server": {
+      "command": "python",
+      "args": ["servers/policy_server.py"],
+      "trust": false
+    },
+    "report-server": {
+      "command": "python",
+      "args": ["servers/report_server.py"],
+      "trust": false
+    },
+    "schedule-server": {
+      "command": "python",
+      "args": ["servers/schedule_server.py"],
+      "trust": false
+    }
+  }
+}

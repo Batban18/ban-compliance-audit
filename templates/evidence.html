@@ -1,0 +1,124 @@
+{% extends "base.html" %}
+{% block title %}Evidence — Compliance Auditor{% endblock %}
+{% block page_title %}Evidence{% endblock %}
+{% block topbar_right %}{{ items|length }} items{% endblock %}
+
+{% block content %}
+
+<div class="flex-between mb-20">
+  <form method="get" class="filter-bar" style="margin-bottom:0;">
+    <select name="control_id" onchange="this.form.submit()">
+      <option value="">All Controls</option>
+      {% for ctrl in controls %}
+      <option value="{{ ctrl.id }}" {% if ctrl.id == selected_control %}selected{% endif %}>
+        {{ ctrl.id }} — {{ ctrl.title[:45] }}
+      </option>
+      {% endfor %}
+    </select>
+    <button type="submit" class="btn btn-secondary">Filter</button>
+  </form>
+  <button class="btn btn-primary" onclick="openModal('modal-upload')">+ Upload Evidence</button>
+</div>
+
+<div class="card">
+  {% if items %}
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Control</th>
+          <th>Filename</th>
+          <th>Description</th>
+          <th>Tags</th>
+          <th>Uploaded</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for item in items %}
+        <tr class="filterable-row">
+          <td class="text-muted text-sm">{{ item.id }}</td>
+          <td class="font-mono text-sm">{{ item.control_id }}</td>
+          <td>
+            <div style="font-weight:500;">{{ item.filename }}</div>
+            {% if item.control_title %}
+            <div class="text-xs text-muted">{{ item.control_title[:50] }}</div>
+            {% endif %}
+          </td>
+          <td class="text-muted truncate" style="max-width:200px;">{{ item.description or '—' }}</td>
+          <td>
+            {% if item.tags %}
+              {% for tag in item.tags.split(',') %}
+                {% if tag.strip() %}
+                <span class="badge badge-info" style="margin-right:3px;">{{ tag.strip() }}</span>
+                {% endif %}
+              {% endfor %}
+            {% else %}
+              <span class="text-muted text-xs">—</span>
+            {% endif %}
+          </td>
+          <td class="text-muted text-sm">{{ item.uploaded_at[:10] if item.uploaded_at else '—' }}</td>
+          <td>
+            <form method="post" action="/evidence/{{ item.id }}/delete" onsubmit="return confirmDelete(this);">
+              <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+            </form>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="card-body" style="text-align:center;padding:48px;color:var(--text-muted);">
+    <div style="font-size:36px;margin-bottom:12px;">📎</div>
+    <div>No evidence items yet.</div>
+    <div class="text-sm mt-16">
+      <button class="btn btn-primary" onclick="openModal('modal-upload')">Upload your first evidence</button>
+    </div>
+  </div>
+  {% endif %}
+</div>
+
+<!-- Upload Modal -->
+<div class="modal-overlay" id="modal-upload">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>Upload Evidence</h3>
+      <button class="modal-close" onclick="closeModal('modal-upload')">✕</button>
+    </div>
+    <form method="post" action="/evidence/upload">
+      <div class="modal-body">
+        <div class="form-group">
+          <label>Control *</label>
+          <select name="control_id" required>
+            <option value="">— Select control —</option>
+            {% for ctrl in controls %}
+            <option value="{{ ctrl.id }}" {% if ctrl.id == selected_control %}selected{% endif %}>
+              {{ ctrl.id }} — {{ ctrl.title[:50] }}
+            </option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Filename *</label>
+          <input type="text" name="filename" placeholder="e.g. access-review-2024-q4.pdf" required>
+        </div>
+        <div class="form-group">
+          <label>Description</label>
+          <textarea name="description" placeholder="What does this evidence demonstrate?"></textarea>
+        </div>
+        <div class="form-group">
+          <label>Tags (comma-separated)</label>
+          <input type="text" name="tags" placeholder="e.g. access-review, quarterly, approved">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="closeModal('modal-upload')">Cancel</button>
+        <button type="submit" class="btn btn-primary">Upload Evidence</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+{% endblock %}

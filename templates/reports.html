@@ -1,0 +1,135 @@
+{% extends "base.html" %}
+{% block title %}Reports — Compliance Auditor{% endblock %}
+{% block page_title %}Reports{% endblock %}
+{% block topbar_right %}{{ reports|length }} reports generated{% endblock %}
+
+{% block content %}
+
+<div class="grid-2 mb-20">
+  <!-- Generate Report -->
+  <div class="card">
+    <div class="card-header">
+      <h3>Generate Report</h3>
+    </div>
+    <div class="card-body">
+      <form method="post" action="/reports/generate">
+        <div class="form-group">
+          <label>Framework</label>
+          <select name="framework" required>
+            {% for fw in frameworks %}
+            <option value="{{ fw.id }}">{{ fw.name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Report Type</label>
+          <select name="report_type" required>
+            <option value="readiness">Readiness Report</option>
+            <option value="gap_analysis">Gap Analysis</option>
+            <option value="executive_summary">Executive Summary</option>
+          </select>
+        </div>
+        <button type="submit" class="btn btn-primary" style="width:100%;">Generate Report</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Report Types Info -->
+  <div class="card">
+    <div class="card-header">
+      <h3>Report Types</h3>
+    </div>
+    <div class="card-body">
+      <div style="display:flex;flex-direction:column;gap:14px;">
+        <div>
+          <div style="font-weight:600;font-size:13px;margin-bottom:4px;">Readiness Report</div>
+          <div class="text-sm text-muted">Shows control compliance percentages, pass/fail breakdown, and overall readiness for audit.</div>
+        </div>
+        <div>
+          <div style="font-weight:600;font-size:13px;margin-bottom:4px;">Gap Analysis</div>
+          <div class="text-sm text-muted">Lists all open gaps by severity with owners and due dates.</div>
+        </div>
+        <div>
+          <div style="font-weight:600;font-size:13px;margin-bottom:4px;">Executive Summary</div>
+          <div class="text-sm text-muted">High-level overview with overall score, grade, critical risks, and recommendations.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Report History -->
+<div class="card">
+  <div class="card-header">
+    <h3>Generated Reports</h3>
+    <input type="text" id="table-search" placeholder="Filter reports…" style="width:220px;">
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Framework</th>
+          <th>Generated</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for r in reports %}
+        <tr class="filterable-row">
+          <td class="text-muted text-sm">{{ r.id }}</td>
+          <td>{{ r.name }}</td>
+          <td>
+            {% if r.report_type == 'readiness' %}
+              <span class="badge badge-success">Readiness</span>
+            {% elif r.report_type == 'gap_analysis' %}
+              <span class="badge badge-warning">Gap Analysis</span>
+            {% elif r.report_type == 'executive_summary' %}
+              <span class="badge badge-info">Executive</span>
+            {% else %}
+              <span class="badge badge-muted">{{ r.report_type }}</span>
+            {% endif %}
+          </td>
+          <td><span class="badge badge-muted">{{ r.framework_id or '—' }}</span></td>
+          <td class="text-muted text-sm">{{ r.generated_at[:16] if r.generated_at else '—' }}</td>
+          <td>
+            <button class="btn btn-secondary btn-sm" onclick="viewReport({{ r.id }})">View JSON</button>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Report View Modal -->
+<div class="modal-overlay" id="modal-report">
+  <div class="modal" style="width:640px;max-width:95vw;">
+    <div class="modal-header">
+      <h3 id="modal-report-title">Report</h3>
+      <button class="modal-close" onclick="closeModal('modal-report')">✕</button>
+    </div>
+    <div class="modal-body">
+      <pre id="modal-report-content" class="font-mono text-sm" style="background:var(--bg);border:1px solid var(--border);padding:16px;border-radius:6px;overflow-x:auto;max-height:60vh;overflow-y:auto;white-space:pre-wrap;"></pre>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('modal-report')">Close</button>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+async function viewReport(id) {
+  const res = await fetch(`/reports/${id}`);
+  const data = await res.json();
+  document.getElementById('modal-report-title').textContent = data.name || 'Report';
+  document.getElementById('modal-report-content').textContent = JSON.stringify(data.content || data, null, 2);
+  openModal('modal-report');
+}
+</script>
+{% endblock %}

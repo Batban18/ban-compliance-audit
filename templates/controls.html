@@ -1,0 +1,146 @@
+{% extends "base.html" %}
+{% block title %}Controls — Compliance Auditor{% endblock %}
+{% block page_title %}Controls{% endblock %}
+{% block topbar_right %}{{ controls|length }} controls{% endblock %}
+
+{% block content %}
+
+<!-- Filter bar -->
+<form method="get" class="filter-bar">
+  <select name="framework" onchange="this.form.submit()">
+    {% for fw in frameworks %}
+    <option value="{{ fw.id }}" {% if fw.id == selected_framework %}selected{% endif %}>{{ fw.name }}</option>
+    {% endfor %}
+  </select>
+  <input type="text" name="search" value="{{ search }}" placeholder="Search controls…" style="flex:1;max-width:300px;">
+  <button type="submit" class="btn btn-primary">Search</button>
+  {% if search %}
+  <a href="/controls?framework={{ selected_framework }}" class="btn btn-secondary">Clear</a>
+  {% endif %}
+</form>
+
+{% if categories and not search %}
+<!-- Category tabs -->
+<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:18px;">
+  <button class="btn btn-secondary btn-sm" onclick="filterCategory('all')">All</button>
+  {% for cat in categories %}
+  <button class="btn btn-secondary btn-sm" onclick="filterCategory('{{ cat }}')">{{ cat }}</button>
+  {% endfor %}
+</div>
+{% endif %}
+
+<div class="card">
+  <div class="table-wrap">
+    <table id="controls-table">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Category</th>
+          <th>Title</th>
+          <th>Status</th>
+          <th>Audit</th>
+          <th>Evidence</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for ctrl in controls %}
+        <tr class="filterable-row" data-category="{{ ctrl.category or '' }}">
+          <td class="font-mono text-sm" style="white-space:nowrap;">{{ ctrl.id }}</td>
+          <td class="text-muted text-sm">{{ ctrl.category or '—' }}</td>
+          <td>
+            <div style="font-weight:500;">{{ ctrl.title }}</div>
+            <div class="text-xs text-muted truncate" style="max-width:320px;margin-top:2px;">{{ ctrl.description or '' }}</div>
+          </td>
+          <td>
+            {% if ctrl.status == 'compliant' %}
+              <span class="badge badge-success">Compliant</span>
+            {% elif ctrl.status == 'in_progress' %}
+              <span class="badge badge-warning">In Progress</span>
+            {% else %}
+              <span class="badge badge-muted">Not Started</span>
+            {% endif %}
+          </td>
+          <td>
+            {% if ctrl.last_audit_status == 'pass' %}
+              <span class="badge badge-success">Pass {{ ctrl.last_audit_score }}</span>
+            {% elif ctrl.last_audit_status == 'partial' %}
+              <span class="badge badge-warning">Partial {{ ctrl.last_audit_score }}</span>
+            {% elif ctrl.last_audit_status == 'fail' %}
+              <span class="badge badge-danger">Fail {{ ctrl.last_audit_score }}</span>
+            {% else %}
+              <span class="text-muted text-xs">Not audited</span>
+            {% endif %}
+          </td>
+          <td>
+            {% if ctrl.evidence_count > 0 %}
+              <a href="/evidence?control_id={{ ctrl.id }}" class="badge badge-info">{{ ctrl.evidence_count }} files</a>
+            {% else %}
+              <span class="text-muted text-xs">None</span>
+            {% endif %}
+          </td>
+          <td>
+            <div style="display:flex;gap:6px;">
+              <button class="btn btn-secondary btn-sm" onclick="showControlDetail({{ ctrl | tojson }})">Detail</button>
+              <form method="post" action="/controls/{{ ctrl.id }}/status" style="display:inline;">
+                <select name="status" onchange="this.form.submit()" style="width:auto;padding:4px 8px;font-size:12px;">
+                  <option value="not_started" {% if ctrl.status == 'not_started' %}selected{% endif %}>Not Started</option>
+                  <option value="in_progress" {% if ctrl.status == 'in_progress' %}selected{% endif %}>In Progress</option>
+                  <option value="compliant" {% if ctrl.status == 'compliant' %}selected{% endif %}>Compliant</option>
+                </select>
+              </form>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Control Detail Modal -->
+<div class="modal-overlay" id="modal-detail">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 id="modal-title">Control Detail</h3>
+      <button class="modal-close" onclick="closeModal('modal-detail')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label>ID</label>
+        <div id="modal-id" class="font-mono text-sm" style="color:var(--accent);"></div>
+      </div>
+      <div class="form-group">
+        <label>Description</label>
+        <div id="modal-desc" style="font-size:13px;line-height:1.6;"></div>
+      </div>
+      <div class="form-group">
+        <label>Guidance</label>
+        <div id="modal-guidance" style="font-size:13px;color:var(--text-muted);line-height:1.6;"></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('modal-detail')">Close</button>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+function showControlDetail(ctrl) {
+  document.getElementById('modal-title').textContent = ctrl.title;
+  document.getElementById('modal-id').textContent = ctrl.id;
+  document.getElementById('modal-desc').textContent = ctrl.description || 'No description.';
+  document.getElementById('modal-guidance').textContent = ctrl.guidance || 'No guidance provided.';
+  openModal('modal-detail');
+}
+
+function filterCategory(cat) {
+  document.querySelectorAll('.filterable-row').forEach(row => {
+    row.style.display = (cat === 'all' || row.dataset.category === cat) ? '' : 'none';
+  });
+}
+</script>
+{% endblock %}

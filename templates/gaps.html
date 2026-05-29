@@ -1,0 +1,168 @@
+{% extends "base.html" %}
+{% block title %}Gap Analysis — Compliance Auditor{% endblock %}
+{% block page_title %}Gap Analysis{% endblock %}
+{% block topbar_right %}{{ gaps|length }} gaps tracked{% endblock %}
+
+{% block content %}
+
+<!-- Summary -->
+<div class="stats-grid mb-20">
+  <div class="stat-card danger">
+    <div class="label">Critical</div>
+    <div class="value">{{ summary.critical }}</div>
+    <div class="sub">Immediate action</div>
+  </div>
+  <div class="stat-card warning">
+    <div class="label">High</div>
+    <div class="value">{{ summary.high }}</div>
+    <div class="sub">Address soon</div>
+  </div>
+  <div class="stat-card info">
+    <div class="label">Open</div>
+    <div class="value">{{ summary.open }}</div>
+    <div class="sub">Not yet resolved</div>
+  </div>
+  <div class="stat-card success">
+    <div class="label">Resolved</div>
+    <div class="value">{{ summary.resolved }}</div>
+    <div class="sub">Closed gaps</div>
+  </div>
+</div>
+
+<div class="flex-between mb-16">
+  <form method="get" class="filter-bar" style="margin-bottom:0;">
+    <select name="framework" onchange="this.form.submit()">
+      <option value="">All Frameworks</option>
+      {% for fw in frameworks %}
+      <option value="{{ fw.id }}" {% if fw.id == selected_framework %}selected{% endif %}>{{ fw.name }}</option>
+      {% endfor %}
+    </select>
+    <input type="text" id="table-search" placeholder="Filter gaps…" style="min-width:200px;">
+    {% if selected_framework %}
+    <a href="/gaps" class="btn btn-secondary btn-sm">Clear</a>
+    {% endif %}
+  </form>
+  <button class="btn btn-primary" onclick="openModal('modal-add-gap')">+ Add Gap</button>
+</div>
+
+<div class="card">
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Severity</th>
+          <th>Title</th>
+          <th>Control</th>
+          <th>Framework</th>
+          <th>Owner</th>
+          <th>Due Date</th>
+          <th>Status</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for gap in gaps %}
+        <tr class="filterable-row">
+          <td>
+            <span class="badge badge-{{ gap.severity }}">{{ gap.severity | title }}</span>
+          </td>
+          <td>
+            <div style="font-weight:500;">{{ gap.title }}</div>
+            {% if gap.description %}
+            <div class="text-xs text-muted truncate" style="max-width:280px;">{{ gap.description }}</div>
+            {% endif %}
+          </td>
+          <td class="font-mono text-sm">{{ gap.control_id }}</td>
+          <td><span class="badge badge-muted">{{ gap.framework_id }}</span></td>
+          <td class="text-muted text-sm">{{ gap.owner or '—' }}</td>
+          <td>
+            {% if gap.due_date %}
+              {% set days = (gap.due_date[:10]) %}
+              <span class="{% if gap.status == 'open' and gap.due_date[:10] < today %}overdue{% else %}text-muted{% endif %} text-sm">
+                {{ gap.due_date[:10] }}
+              </span>
+            {% else %}
+              <span class="text-muted text-sm">—</span>
+            {% endif %}
+          </td>
+          <td>
+            {% if gap.status == 'resolved' %}
+              <span class="badge badge-success">Resolved</span>
+            {% else %}
+              <span class="badge badge-warning">Open</span>
+            {% endif %}
+          </td>
+          <td>
+            {% if gap.status == 'open' %}
+            <form method="post" action="/gaps/{{ gap.id }}/resolve" style="display:inline;">
+              <button type="submit" class="btn btn-success btn-sm">Resolve</button>
+            </form>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Add Gap Modal -->
+<div class="modal-overlay" id="modal-add-gap">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>Add Compliance Gap</h3>
+      <button class="modal-close" onclick="closeModal('modal-add-gap')">✕</button>
+    </div>
+    <form method="post" action="/gaps/add">
+      <div class="modal-body">
+        <div class="form-row">
+          <div class="form-group">
+            <label>Framework *</label>
+            <select name="framework_id" required>
+              {% for fw in frameworks %}
+              <option value="{{ fw.id }}">{{ fw.name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Control ID *</label>
+            <input type="text" name="control_id" placeholder="e.g. SOC2-CC6.1" required>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Gap Title *</label>
+          <input type="text" name="title" placeholder="Short description of the gap" required>
+        </div>
+        <div class="form-group">
+          <label>Description</label>
+          <textarea name="description" placeholder="Details about the gap and its impact"></textarea>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Severity *</label>
+            <select name="severity">
+              <option value="critical">Critical</option>
+              <option value="high">High</option>
+              <option value="medium" selected>Medium</option>
+              <option value="low">Low</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Owner</label>
+            <input type="text" name="owner" placeholder="Team or person responsible">
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Due Date</label>
+          <input type="date" name="due_date">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="closeModal('modal-add-gap')">Cancel</button>
+        <button type="submit" class="btn btn-primary">Add Gap</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+{% endblock %}

@@ -1,0 +1,24 @@
+{
+  "mcpServers": {
+    "evidence-server": {
+      "httpUrl": "http://localhost:5001/mcp",
+      "timeout": 30000,
+      "trust": false
+    },
+    "audit-server": {
+      "httpUrl": "http://localhost:5002/mcp",
+      "timeout": 30000,
+      "trust": false
+    },
+    "vendor-server": {
+      "httpUrl": "http://localhost:5003/mcp",
+      "timeout": 30000,
+      "trust": false
+    },
+    "gap-analysis-server": {
+      "httpUrl": "http://localhost:5004/mcp",
+      "timeout": 30000,
+      "trust": false
+    }
+  }
+}

@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}Compliance Auditor{% endblock %}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <h1>Compliance Auditor</h1>
+    <p>Multi-framework management</p>
+  </div>
+  <nav class="sidebar-nav">
+    <a href="/" class="nav-item {% if active == 'dashboard' %}active{% endif %}">
+      <span class="icon">⬛</span> Dashboard
+    </a>
+    <a href="/controls" class="nav-item {% if active == 'controls' %}active{% endif %}">
+      <span class="icon">☑</span> Controls
+    </a>
+    <a href="/evidence" class="nav-item {% if active == 'evidence' %}active{% endif %}">
+      <span class="icon">📎</span> Evidence
+    </a>
+    <a href="/gaps" class="nav-item {% if active == 'gaps' %}active{% endif %}">
+      <span class="icon">⚠</span> Gap Analysis
+    </a>
+    <a href="/vendors" class="nav-item {% if active == 'vendors' %}active{% endif %}">
+      <span class="icon">🔗</span> Vendors
+    </a>
+    <a href="/reports" class="nav-item {% if active == 'reports' %}active{% endif %}">
+      <span class="icon">📊</span> Reports
+    </a>
+    <a href="/schedule" class="nav-item {% if active == 'schedule' %}active{% endif %}">
+      <span class="icon">📅</span> Schedule
+    </a>
+  </nav>
+  <div class="sidebar-footer">
+    8 MCP servers active
+  </div>
+</aside>
+
+<main class="main">
+  {% block topbar %}
+  <div class="topbar">
+    <h2>{% block page_title %}{% endblock %}</h2>
+    <div class="topbar-meta">{% block topbar_right %}{% endblock %}</div>
+  </div>
+  {% endblock %}
+
+  <div class="content">
+    {% block content %}{% endblock %}
+  </div>
+</main>
+
+<script src="/static/app.js"></script>
+{% block scripts %}{% endblock %}
+</body>
+</html>

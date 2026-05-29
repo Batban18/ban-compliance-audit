@@ -1,0 +1,140 @@
+{% extends "base.html" %}
+{% block title %}Vendors — Compliance Auditor{% endblock %}
+{% block page_title %}Vendor Risk Management{% endblock %}
+{% block topbar_right %}{{ vendors|length }} vendors tracked{% endblock %}
+
+{% block content %}
+
+<div class="flex-between mb-20">
+  <input type="text" id="table-search" placeholder="Search vendors…" style="width:260px;">
+  <button class="btn btn-primary" onclick="openModal('modal-add-vendor')">+ Add Vendor</button>
+</div>
+
+<div class="card">
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Vendor</th>
+          <th>Service</th>
+          <th>Risk Level</th>
+          <th>Latest Score</th>
+          <th>Assessments</th>
+          <th>Updated</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for v in vendors %}
+        <tr class="filterable-row">
+          <td>
+            <div style="font-weight:600;">{{ v.name }}</div>
+          </td>
+          <td class="text-muted text-sm">{{ v.service or '—' }}</td>
+          <td>
+            {% if v.risk_level == 'critical' %}
+              <span class="badge badge-critical">Critical</span>
+            {% elif v.risk_level == 'high' %}
+              <span class="badge badge-high">High</span>
+            {% elif v.risk_level == 'medium' %}
+              <span class="badge badge-medium">Medium</span>
+            {% else %}
+              <span class="badge badge-low">Low</span>
+            {% endif %}
+          </td>
+          <td>
+            {% if v.latest_score is not none %}
+              <span style="color:{% if v.latest_score >= 80 %}var(--success){% elif v.latest_score >= 60 %}var(--warning){% else %}var(--danger){% endif %};font-weight:600;">
+                {{ v.latest_score }}/100
+              </span>
+            {% else %}
+              <span class="text-muted text-sm">Not assessed</span>
+            {% endif %}
+          </td>
+          <td class="text-muted text-sm">{{ v.assessment_count or 0 }}</td>
+          <td class="text-muted text-sm">{{ v.updated_at[:10] if v.updated_at else '—' }}</td>
+          <td>
+            <button class="btn btn-secondary btn-sm" onclick="openAssessModal({{ v.id }}, '{{ v.name }}')">
+              Assess
+            </button>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Add Vendor Modal -->
+<div class="modal-overlay" id="modal-add-vendor">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>Add Vendor</h3>
+      <button class="modal-close" onclick="closeModal('modal-add-vendor')">✕</button>
+    </div>
+    <form method="post" action="/vendors/add">
+      <div class="modal-body">
+        <div class="form-group">
+          <label>Vendor Name *</label>
+          <input type="text" name="name" placeholder="e.g. Acme Corp" required>
+        </div>
+        <div class="form-group">
+          <label>Service / Description *</label>
+          <input type="text" name="service" placeholder="e.g. Cloud hosting, Payment processing" required>
+        </div>
+        <div class="form-group">
+          <label>Initial Risk Level</label>
+          <select name="risk_level">
+            <option value="low">Low</option>
+            <option value="medium" selected>Medium</option>
+            <option value="high">High</option>
+            <option value="critical">Critical</option>
+          </select>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="closeModal('modal-add-vendor')">Cancel</button>
+        <button type="submit" class="btn btn-primary">Add Vendor</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Assessment Modal -->
+<div class="modal-overlay" id="modal-assess">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>Vendor Assessment — <span id="assess-vendor-name"></span></h3>
+      <button class="modal-close" onclick="closeModal('modal-assess')">✕</button>
+    </div>
+    <form id="assess-form" method="post">
+      <div class="modal-body">
+        <div class="form-group">
+          <label>Security Score (0–100) *</label>
+          <input type="number" name="score" min="0" max="100" placeholder="e.g. 85" required>
+          <div class="text-xs text-muted" style="margin-top:4px;">≥80 = Low risk, 60–79 = Medium, 40–59 = High, &lt;40 = Critical</div>
+        </div>
+        <div class="form-group">
+          <label>Findings / Notes</label>
+          <textarea name="findings" placeholder="Summary of assessment findings, certifications, issues…"></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="closeModal('modal-assess')">Cancel</button>
+        <button type="submit" class="btn btn-primary">Save Assessment</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+function openAssessModal(vendorId, vendorName) {
+  document.getElementById('assess-vendor-name').textContent = vendorName;
+  document.getElementById('assess-form').action = `/vendors/${vendorId}/assess`;
+  openModal('modal-assess');
+}
+</script>
+{% endblock %}

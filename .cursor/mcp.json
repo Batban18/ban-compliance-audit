@@ -2,23 +2,55 @@
   "mcpServers": {
     "evidence-server": {
       "httpUrl": "http://localhost:5001/mcp",
-      "timeout": 30000,
-      "trust": false
+      "timeout": 60000,
+      "trust": false,
+      "description": "Collects and manages audit evidence for compliance controls",
+      "version": "1.1.0",
+      "protocol": "2024-11-05",
+      "headers": {
+        "X-API-Version": "v1",
+        "X-Service-Name": "evidence-server"
+      },
+      "tools": ["upload_evidence", "list_evidence", "get_evidence", "delete_evidence", "tag_evidence"]
     },
     "audit-server": {
       "httpUrl": "http://localhost:5002/mcp",
       "timeout": 30000,
-      "trust": false
+      "trust": true,
+      "description": "Runs automated compliance checks and scores controls",
+      "version": "2.0.0",
+      "protocol": "2024-11-05",
+      "headers": {
+        "Authorization": "Bearer audit-service-token",
+        "X-API-Version": "v2"
+      },
+      "tools": ["run_audit_check", "run_full_audit", "get_audit_score", "get_failing_controls"]
     },
     "vendor-server": {
       "httpUrl": "http://localhost:5003/mcp",
-      "timeout": 30000,
-      "trust": false
+      "timeout": 45000,
+      "trust": false,
+      "description": "Third-party vendor risk assessment and tracking",
+      "version": "1.3.0",
+      "protocol": "2024-11-05",
+      "headers": {
+        "Authorization": "Bearer vendor-service-token",
+        "X-Risk-Threshold": "high"
+      },
+      "tools": ["add_vendor", "list_vendors", "update_vendor_risk", "list_high_risk_vendors"]
     },
     "gap-analysis-server": {
       "httpUrl": "http://localhost:5004/mcp",
       "timeout": 30000,
-      "trust": false
+      "trust": false,
+      "description": "Identifies compliance gaps and tracks remediation",
+      "version": "1.0.0",
+      "protocol": "2024-11-05",
+      "headers": {
+        "X-API-Version": "v1",
+        "X-Gap-Severity-Filter": "critical,high"
+      },
+      "tools": ["get_all_gaps", "get_critical_gaps", "mark_gap_resolved", "get_gap_summary"]
     }
   }
 }

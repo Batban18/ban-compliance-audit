@@ -2,23 +2,63 @@
   "mcpServers": {
     "framework-server": {
       "command": "python",
-      "args": ["servers/framework_server.py"],
-      "trust": false
+      "args": ["servers/framework_server.py", "--mode", "production", "--log-level", "INFO"],
+      "description": "Manages SOC2, ISO27001, HIPAA, GDPR compliance frameworks",
+      "version": "1.2.0",
+      "protocol": "2024-11-05",
+      "trust": false,
+      "env": {
+        "FRAMEWORK_DB": "sqlite:///compliance.db",
+        "FRAMEWORK_LOG_LEVEL": "INFO",
+        "FRAMEWORK_CACHE_TTL": "3600"
+      },
+      "tools": ["list_frameworks", "get_controls", "get_control_detail", "search_controls"]
     },
     "policy-server": {
       "command": "python",
-      "args": ["servers/policy_server.py"],
-      "trust": false
+      "args": ["servers/policy_server.py", "--strict-mode", "--version", "v2"],
+      "description": "Manages security policies, versions and approval workflows",
+      "version": "1.0.0",
+      "protocol": "2024-11-05",
+      "trust": false,
+      "env": {
+        "POLICY_STORE": "sqlite:///compliance.db",
+        "POLICY_APPROVAL_REQUIRED": "true",
+        "POLICY_MAX_VERSIONS": "10"
+      },
+      "tools": ["create_policy", "get_policy", "list_policies", "approve_policy", "get_policy_version_history"]
     },
     "report-server": {
       "command": "python",
-      "args": ["servers/report_server.py"],
-      "trust": false
+      "args": ["servers/report_server.py", "--format", "pdf", "--output-dir", "./reports"],
+      "description": "Generates audit-ready compliance reports and executive summaries",
+      "version": "1.5.0",
+      "protocol": "2024-11-05",
+      "trust": true,
+      "env": {
+        "REPORT_OUTPUT_DIR": "./reports",
+        "SMTP_HOST": "smtp.gmail.com",
+        "SMTP_PORT": "587",
+        "SMTP_USE_TLS": "true",
+        "REPORT_LOGO_PATH": "./static/logo.png"
+      },
+      "tools": ["generate_readiness_report", "generate_gap_report", "generate_executive_summary", "list_generated_reports"]
     },
     "schedule-server": {
       "command": "python",
-      "args": ["servers/schedule_server.py"],
-      "trust": false
+      "args": ["servers/schedule_server.py", "--reminder-days", "30", "--timezone", "UTC"],
+      "description": "Tracks audit deadlines and manages compliance calendar",
+      "version": "1.1.0",
+      "protocol": "2024-11-05",
+      "trust": false,
+      "env": {
+        "SMTP_HOST": "smtp.gmail.com",
+        "SMTP_PORT": "587",
+        "SMTP_USE_TLS": "true",
+        "ALERT_EMAIL": "compliance@company.com",
+        "REMINDER_DAYS_BEFORE": "30,14,7,1"
+      },
+      "tools": ["add_deadline", "list_deadlines", "get_overdue_items", "get_upcoming_deadlines", "mark_complete"]
     }
   }
 }

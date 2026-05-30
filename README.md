@@ -20,18 +20,43 @@ Add three core servers to get started:
   "mcpServers": {
     "framework-server": {
       "command": "python",
-      "args": ["servers/framework_server.py"],
-      "trust": false
+      "args": ["servers/framework_server.py", "--mode", "production", "--log-level", "INFO"],
+      "description": "Manages SOC2, ISO27001, HIPAA, GDPR compliance frameworks",
+      "version": "1.2.0",
+      "protocol": "2024-11-05",
+      "trust": false,
+      "env": {
+        "FRAMEWORK_DB": "sqlite:///compliance.db",
+        "FRAMEWORK_CACHE_TTL": "3600"
+      },
+      "tools": ["list_frameworks", "get_controls", "get_control_detail", "search_controls"]
     },
     "audit-server": {
       "httpUrl": "http://localhost:5002/mcp",
       "timeout": 30000,
-      "trust": false
+      "trust": true,
+      "description": "Runs automated compliance checks and scores controls",
+      "version": "2.0.0",
+      "protocol": "2024-11-05",
+      "headers": {
+        "Authorization": "Bearer audit-service-token",
+        "X-API-Version": "v2"
+      },
+      "tools": ["run_audit_check", "run_full_audit", "get_audit_score", "get_failing_controls"]
     },
     "report-server": {
       "command": "python",
-      "args": ["servers/report_server.py"],
-      "trust": false
+      "args": ["servers/report_server.py", "--format", "pdf", "--output-dir", "./reports"],
+      "description": "Generates audit-ready compliance reports and executive summaries",
+      "version": "1.5.0",
+      "protocol": "2024-11-05",
+      "trust": true,
+      "env": {
+        "REPORT_OUTPUT_DIR": "./reports",
+        "SMTP_HOST": "smtp.gmail.com",
+        "SMTP_PORT": "587"
+      },
+      "tools": ["generate_readiness_report", "generate_gap_report", "generate_executive_summary"]
     }
   }
 }
